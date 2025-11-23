@@ -13,8 +13,7 @@ def setup_logging(verbose: bool = False):
         datefmt="[%X]",
         handlers=[RichHandler(rich_tracebacks=True, markup=True)]
     )
-    
-    # Suppress noisy libraries
+
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
