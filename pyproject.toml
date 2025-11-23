@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pr-assistant-cli"
-version = "0.1.0"
+version = "0.1.2"
 description = "A CLI agent to assist with PR creation and management"
 readme = "README.md"
 authors = [{ name = "Mann Talati", email = "mann.talati@gmail.com" }]
