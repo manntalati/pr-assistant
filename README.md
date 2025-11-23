@@ -1,5 +1,11 @@
 # PR Assistant CLI
 
+[![Version](https://img.shields.io/pypi/v/pr-assistant-cli?color=red&label=version)](https://pypi.org/project/pr-assistant-cli/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Language](https://img.shields.io/badge/language-Python-brightgreen.svg)](#) 
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/pr-assistant-cli?period=total&units=NONE&left_color=grey&right_color=BLUE&left_text=downloads)](https://pepy.tech/projects/pr-assistant-cli)
+
+
 PR Assistant is an AI-powered CLI tool designed to help developers streamline their workflow. It understands your codebase and automatically generates Pull Requests based on high-level instructions.
 
 ## Features
