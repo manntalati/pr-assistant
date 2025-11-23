@@ -13,22 +13,33 @@ def mock_deps(monkeypatch):
     monkeypatch.setattr("pr_assistant.main.ConfigManager", lambda: mock_conf)
     
     mock_agent = MagicMock()
-    monkeypatch.setattr("pr_assistant.main.Agent", lambda: mock_agent)
+    monkeypatch.setattr("pr_assistant.main.Agent", lambda *args: mock_agent)
     
     mock_gh = MagicMock()
-    monkeypatch.setattr("pr_assistant.main.GitHubClient", lambda: mock_gh)
+    monkeypatch.setattr("pr_assistant.main.GitHubClient", lambda *args: mock_gh)
     
     return mock_conf, mock_agent, mock_gh
 
 def test_init_command(mock_deps):
     mock_conf, _, _ = mock_deps
+    # Mock global config path exists check
+    mock_conf.global_config_path.exists.return_value = False
     
-    # Simulate user input
-    result = runner.invoke(app, ["init"], input="token\nrepo\nkey\n")
+    # Simulate user input:
+    # 1. Github Token
+    # 2. Gemini Key
+    # 3. "y" to configure local project
+    # 4. Repo name
+    inputs = "token\nkey\ny\nowner/repo\n"
+    result = runner.invoke(app, ["init"], input=inputs)
     
     assert result.exit_code == 0
-    assert "Configuration saved successfully" in result.stdout
-    mock_conf.save.assert_called_once()
+    assert "Global configuration saved!" in result.stdout
+    assert "Project configuration saved" in result.stdout
+    
+    # Check calls
+    # We expect set calls: github_token (global), gemini_key (global), repo_name (local)
+    assert mock_conf.set.call_count >= 3
 
 def test_create_command(mock_deps):
     _, mock_agent, mock_gh = mock_deps
@@ -43,6 +54,7 @@ def test_create_command(mock_deps):
     
     mock_gh.create_pr.return_value = "http://url"
     
+    # We need to invoke via 'main' callback to setup context, but CliRunner handles that.
     result = runner.invoke(app, ["create", "1"])
     
     assert result.exit_code == 0

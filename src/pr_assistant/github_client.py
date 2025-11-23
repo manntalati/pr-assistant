@@ -3,8 +3,8 @@ from typing import List, Optional
 from pr_assistant.config import ConfigManager
 
 class GitHubClient:
-    def __init__(self):
-        self.config = ConfigManager()
+    def __init__(self, config_manager: Optional[ConfigManager] = None):
+        self.config = config_manager or ConfigManager()
         self.token = self.config.get("github_token")
         if not self.token:
             raise ValueError("GitHub token not found in configuration. Run 'pr-assistant init' first.")

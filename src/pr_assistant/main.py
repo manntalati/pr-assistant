@@ -1,53 +1,91 @@
 import typer
 from rich.console import Console
 from rich.table import Table
+from typing import Optional
+from dataclasses import dataclass
+
 from pr_assistant.config import ConfigManager
 from pr_assistant.rate_limiter import RateLimiter
 from pr_assistant.agent import Agent
 from pr_assistant.github_client import GitHubClient
+from pr_assistant.logger import setup_logging, get_logger
+
+# Setup logger
+logger = get_logger(__name__)
+
+@dataclass
+class PRContext:
+    config: ConfigManager
+    console: Console
+    verbose: bool = False
 
 app = typer.Typer(help="PR Assistant CLI - Your AI-powered coding companion.")
 console = Console()
 
+@app.callback()
+def main(
+    ctx: typer.Context,
+    verbose: bool = typer.Option(False, help="Enable verbose logging"),
+):
+    """
+    PR Assistant CLI entry point.
+    """
+    setup_logging(verbose)
+    ctx.obj = PRContext(
+        config=ConfigManager(),
+        console=console,
+        verbose=verbose
+    )
+
 @app.command()
-def init():
+def init(ctx: typer.Context):
     """
     Initialize the PR Assistant configuration.
     """
-    console.print("[bold blue]PR Assistant Initialization[/bold blue]")
+    ctx.obj.console.print("[bold blue]PR Assistant Initialization[/bold blue]")
+    config_manager = ctx.obj.config
     
-    config_manager = ConfigManager()
-    if config_manager.exists():
-        overwrite = typer.confirm("Configuration already exists. Overwrite?")
-        if not overwrite:
-            console.print("Aborted.")
-            return
-
+    # Check if global config exists
+    if config_manager.global_config_path.exists():
+        if not typer.confirm("Global configuration already exists. Overwrite?"):
+            ctx.obj.console.print("Skipping global config update.")
+    
+    # Global Config (Secrets)
     github_token = typer.prompt("Enter your GitHub Personal Access Token", hide_input=True)
-    repo_name = typer.prompt("Enter the repository name (e.g., owner/repo)")
     gemini_key = typer.prompt("Enter your Gemini API Key", hide_input=True)
+    
+    config_manager.set("github_token", github_token, local=False)
+    config_manager.set("gemini_api_key", gemini_key, local=False)
+    
+    ctx.obj.console.print("[green]Global configuration saved![/green]")
 
-    config = {
-        "github_token": github_token,
-        "repo_name": repo_name,
-        "gemini_api_key": gemini_key
-    }
-    config_manager.save(config)
-    console.print("[green]Configuration saved successfully![/green]")
+    # Local Config (Project settings)
+    if typer.confirm("Do you want to configure this directory as a project? (Saves repo name locally)"):
+        repo_name = typer.prompt("Enter the repository name (e.g., owner/repo)")
+        config_manager.set("repo_name", repo_name, local=True)
+        ctx.obj.console.print(f"[green]Project configuration saved to {config_manager.local_config_path}![/green]")
+    else:
+        # Fallback to global if they don't want local
+        repo_name = typer.prompt("Enter the repository name (e.g., owner/repo) for global default")
+        config_manager.set("repo_name", repo_name, local=False)
+        ctx.obj.console.print("[green]Global repository default saved![/green]")
 
 @app.command()
 def create(
+    ctx: typer.Context,
     count: int = typer.Argument(1, help="Number of PRs to create"),
     instruction: str = typer.Option("Improve code quality", help="High-level instruction for the agent")
 ):
     """
     Create X number of PRs based on agent analysis.
     """
+    console = ctx.obj.console
     console.print(f"[bold green]Creating {count} PRs with instruction: '{instruction}'...[/bold green]")
     
     try:
-        agent = Agent()
-        gh_client = GitHubClient()
+        # Initialize services with config from context
+        agent = Agent(ctx.obj.config)
+        gh_client = GitHubClient(ctx.obj.config)
         
         prs = agent.propose_prs(instruction, count)
         
@@ -62,10 +100,12 @@ def create(
             files = pr_data.get("files", [])
 
             console.print(f"Preparing PR: [bold]{title}[/bold]")
+            logger.info(f"Creating branch: {branch}")
             
             try:
                 gh_client.create_branch(branch)
             except Exception as e:
+                logger.error(f"Failed to create branch {branch}: {e}")
                 console.print(f"[red]Failed to create branch {branch}: {e}[/red]")
                 continue
 
@@ -78,16 +118,18 @@ def create(
             console.print(f"[green]PR Created: {url}[/green]")
 
     except Exception as e:
+        logger.exception("Error in create command")
         console.print(f"[bold red]Error:[/bold red] {e}")
 
 @app.command()
-def list_prs(state: str = "open"):
+def list_prs(ctx: typer.Context, state: str = "open"):
     """
     List active PRs with details.
     """
+    console = ctx.obj.console
     console.print(f"[bold blue]Listing {state} PRs...[/bold blue]")
     try:
-        gh_client = GitHubClient()
+        gh_client = GitHubClient(ctx.obj.config)
         prs = gh_client.list_prs(state)
         
         table = Table(title="Active Pull Requests")
@@ -102,6 +144,7 @@ def list_prs(state: str = "open"):
         console.print(table)
 
     except Exception as e:
+        logger.exception("Error listing PRs")
         console.print(f"[bold red]Error:[/bold red] {e}")
 
 if __name__ == "__main__":

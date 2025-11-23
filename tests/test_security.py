@@ -8,7 +8,8 @@ def test_init_masks_input(mock_config_manager):
     # We can't easily verify masking in CliRunner as it captures stdin/stdout
     # But we can verify that the keys are not printed back to stdout in clear text
     
-    inputs = "my_github_token\nmy_repo\nmy_gemini_key\n"
+    # Inputs: Token, Key, Confirm Local (n), Repo Name
+    inputs = "my_github_token\nmy_gemini_key\nn\nmy_repo\n"
     result = runner.invoke(app, ["init"], input=inputs)
     
     # Check that inputs are not echoed back in the output

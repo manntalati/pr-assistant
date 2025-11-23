@@ -15,7 +15,7 @@ def mock_config_dir(tmp_path):
     return config_dir
 
 @pytest.fixture
-def mock_config_manager(mock_config_dir, monkeypatch):
+def mock_config_manager(mock_config_dir, monkeypatch, tmp_path):
     """
     Fixture to mock ConfigManager using a temporary directory.
     """
@@ -35,6 +35,9 @@ def mock_config_manager(mock_config_dir, monkeypatch):
         
     monkeypatch.setattr("typer.get_app_dir", mock_get_app_dir)
     monkeypatch.setattr("pathlib.Path.home", lambda: mock_config_dir)
+    
+    # Ensure we are in a clean directory for local config tests
+    monkeypatch.chdir(tmp_path)
     
     return ConfigManager()
 

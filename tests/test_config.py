@@ -7,11 +7,20 @@ def test_config_initialization(mock_config_manager):
 
 def test_config_save_and_load(mock_config_manager):
     data = {"key": "value", "number": 123}
-    mock_config_manager.save(data)
+    mock_config_manager.save(data, local=False)
     
     assert mock_config_manager.exists()
     loaded = mock_config_manager.load()
     assert loaded == data
+
+def test_config_local_override(mock_config_manager):
+    # Save global
+    mock_config_manager.save({"key": "global"}, local=False)
+    assert mock_config_manager.get("key") == "global"
+    
+    # Save local
+    mock_config_manager.save({"key": "local"}, local=True)
+    assert mock_config_manager.get("key") == "local"
 
 def test_config_get_set(mock_config_manager):
     mock_config_manager.set("test_key", "test_value")

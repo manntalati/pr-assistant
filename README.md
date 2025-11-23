@@ -35,7 +35,25 @@ pr-assistant init
 
 Follow the interactive prompts to save your credentials.
 
+### Project-Level Configuration
+
+You can configure the tool for specific projects to avoid re-entering the repository name.
+
+1.  Run `pr-assistant init` inside your project directory.
+2.  When prompted "Do you want to configure this directory as a project?", answer `y`.
+3.  The repository name will be saved to a local `.pr-assistant.json` file.
+
+**Note**: Your API keys are always stored securely in your global configuration (home directory) and are never saved to the local project file.
+
 ## Usage
+
+### Global Options
+
+- `--verbose`: Enable detailed debug logging.
+
+```bash
+pr-assistant --verbose create 1
+```
 
 ### Create a PR
 

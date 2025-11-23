@@ -1,6 +1,6 @@
 import json
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import google.generativeai as genai
 from pr_assistant.config import ConfigManager
 from pr_assistant.codebase import CodebaseReader
@@ -8,8 +8,8 @@ from pr_assistant.prompts import SYSTEM_PROMPT
 from pr_assistant.rate_limiter import RateLimiter
 
 class Agent:
-    def __init__(self):
-        self.config = ConfigManager()
+    def __init__(self, config_manager: Optional[ConfigManager] = None):
+        self.config = config_manager or ConfigManager()
         self.api_key = self.config.get("gemini_api_key") or os.environ.get("GEMINI_API_KEY")
         if not self.api_key:
             raise ValueError("Gemini API key not found. Set GEMINI_API_KEY env var or run init.")
