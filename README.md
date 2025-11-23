@@ -1,1 +1,78 @@
-# pr-assistant
+# PR Assistant CLI
+
+PR Assistant is an AI-powered CLI tool designed to help developers streamline their workflow. It understands your codebase and automatically generates Pull Requests based on high-level instructions.
+
+## Features
+
+- **AI-Powered PR Creation**: Generate PRs with code changes, titles, and descriptions from simple prompts.
+- **Codebase Understanding**: Analyzes your project structure to provide context-aware suggestions.
+- **GitHub Integration**: Automatically creates branches and opens PRs in your repository.
+- **Rate Limiting**: Built-in client-side rate limiter to prevent API abuse.
+- **Gemini Integration**: Uses Google's Gemini models for intelligent code generation.
+
+## Installation
+
+You can install the package directly from the source:
+
+```bash
+git clone https://github.com/yourusername/pr-assistant.git
+cd pr-assistant
+pip install -e .
+```
+
+## Configuration
+
+Before using the tool, you need to initialize the configuration with your API keys.
+
+1.  **GitHub Token**: A Personal Access Token (PAT) with `repo` scope.
+2.  **Gemini API Key**: Your Google Gemini API key.
+
+Run the init command:
+
+```bash
+pr-assistant init
+```
+
+Follow the interactive prompts to save your credentials.
+
+## Usage
+
+### Create a PR
+
+To create a PR, use the `create` command. You can specify the number of PRs to generate and a specific instruction.
+
+```bash
+pr-assistant create 1 --instruction "Add a hello world function to main.py"
+```
+
+### List PRs
+
+To list active PRs in your repository:
+
+```bash
+pr-assistant list-prs
+```
+
+## Development & Testing
+
+This project includes a comprehensive test suite using `pytest`.
+
+### Running Tests
+
+To run the tests, ensure you have the dev dependencies installed:
+
+```bash
+pip install -e ".[dev]"
+python3 -m pytest tests/
+```
+
+### Test Coverage
+
+- **Unit Tests**: Config, Rate Limiter, Codebase Reader.
+- **Mocked Tests**: GitHub Client, Agent (LLM).
+- **Integration Tests**: CLI Commands.
+- **Security Tests**: Key handling.
+
+## License
+
+MIT
