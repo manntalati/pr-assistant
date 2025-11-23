@@ -13,7 +13,6 @@ class GitHubClient:
         self.gh = Github(auth=auth)
         self.repo_name = self.config.get("repo_name")
         if not self.repo_name:
-             # Try to infer from current directory git config? For now, require config.
              raise ValueError("Repository name not configured. Run 'pr-assistant init' first.")
         
         self.repo = self.gh.get_repo(self.repo_name)

@@ -41,12 +41,10 @@ class Agent:
         response = self.model.generate_content(prompt)
         
         content = response.text
-        # Gemini might wrap JSON in markdown blocks
         content = content.replace("```json", "").replace("```", "").strip()
         
         try:
             data = json.loads(content)
             return data.get("prs", [])
         except json.JSONDecodeError:
-            # Fallback or retry logic could go here
             return []

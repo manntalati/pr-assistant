@@ -63,20 +63,17 @@ def create(
 
             console.print(f"Preparing PR: [bold]{title}[/bold]")
             
-            # Create branch
             try:
                 gh_client.create_branch(branch)
             except Exception as e:
                 console.print(f"[red]Failed to create branch {branch}: {e}[/red]")
                 continue
 
-            # Create/Update files
             for file_change in files:
                 path = file_change.get("path")
                 content = file_change.get("content")
                 gh_client.create_file(path, f"feat: {title}", content, branch)
             
-            # Open PR
             url = gh_client.create_pr(title, body, branch)
             console.print(f"[green]PR Created: {url}[/green]")
 

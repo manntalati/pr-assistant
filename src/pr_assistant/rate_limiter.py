@@ -32,7 +32,7 @@ class RateLimiter:
             json.dump(usage, f)
 
     def _cleanup_old_requests(self, usage: Dict[str, float]) -> Dict[str, float]:
-        cutoff = time.time() - 3600 # 1 hour ago
+        cutoff = time.time() - 3600
         return {k: v for k, v in usage.items() if v > cutoff}
 
     def check_limit(self) -> bool:
@@ -45,7 +45,6 @@ class RateLimiter:
         if len(usage) >= self.max_requests:
             return False
         
-        # Add current request
         request_id = str(time.time())
         usage[request_id] = time.time()
         self._save_usage(usage)

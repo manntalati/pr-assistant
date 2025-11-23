@@ -23,7 +23,6 @@ class CodebaseReader:
         for pattern in self.ignore_patterns:
             if fnmatch.fnmatch(rel_path, pattern) or fnmatch.fnmatch(os.path.basename(path), pattern):
                 return True
-            # Handle directory matches (e.g. "dist/")
             if pattern.endswith("/") and rel_path.startswith(pattern.rstrip("/")):
                 return True
         return False
@@ -32,7 +31,6 @@ class CodebaseReader:
         """Returns a string representation of the file tree."""
         structure = []
         for root, dirs, files in os.walk(self.root_dir):
-            # Filter directories in place
             dirs[:] = [d for d in dirs if not self._is_ignored(os.path.join(root, d))]
             
             level = root.replace(self.root_dir, '').count(os.sep)
@@ -62,5 +60,5 @@ class CodebaseReader:
                     with open(full_path, "r", encoding="utf-8") as file_obj:
                         files_content[os.path.relpath(full_path, self.root_dir)] = file_obj.read()
                 except UnicodeDecodeError:
-                    pass # Skip binary files
+                    pass
         return files_content
