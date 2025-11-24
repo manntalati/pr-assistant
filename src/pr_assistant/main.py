@@ -52,21 +52,34 @@ def init(ctx: typer.Context):
     
     # Global Config (Secrets)
     github_token = typer.prompt("Enter your GitHub Personal Access Token", hide_input=True)
+    bot_token = typer.prompt("Enter Bot Token (optional, press enter to skip)", default="", hide_input=True, show_default=False)
     gemini_key = typer.prompt("Enter your Gemini API Key", hide_input=True)
     
     config_manager.set("github_token", github_token, local=False)
+    if bot_token:
+        config_manager.set("bot_github_token", bot_token, local=False)
     config_manager.set("gemini_api_key", gemini_key, local=False)
     
     ctx.obj.console.print("[green]Global configuration saved![/green]")
 
     # Local Config (Project settings)
     if typer.confirm("Do you want to configure this directory as a project? (Saves repo name locally)"):
-        repo_name = typer.prompt("Enter the repository name (e.g., owner/repo)")
+        while True:
+            repo_name = typer.prompt("Enter the repository name (e.g., owner/repo)")
+            if "/" in repo_name:
+                break
+            ctx.obj.console.print("[red]Invalid format. Please use 'owner/repo' (e.g., 'username/project')[/red]")
+            
         config_manager.set("repo_name", repo_name, local=True)
         ctx.obj.console.print(f"[green]Project configuration saved to {config_manager.local_config_path}![/green]")
     else:
         # Fallback to global if they don't want local
-        repo_name = typer.prompt("Enter the repository name (e.g., owner/repo) for global default")
+        while True:
+            repo_name = typer.prompt("Enter the repository name (e.g., owner/repo) for global default")
+            if "/" in repo_name:
+                break
+            ctx.obj.console.print("[red]Invalid format. Please use 'owner/repo' (e.g., 'username/project')[/red]")
+            
         config_manager.set("repo_name", repo_name, local=False)
         ctx.obj.console.print("[green]Global repository default saved![/green]")
 
@@ -145,6 +158,41 @@ def list_prs(ctx: typer.Context, state: str = "open"):
 
     except Exception as e:
         logger.exception("Error listing PRs")
+        console.print(f"[bold red]Error:[/bold red] {e}")
+
+@app.command()
+def review_pr(
+    ctx: typer.Context,
+    pr_number: int = typer.Argument(..., help="PR Number to review"),
+    persona: str = typer.Option("Senior Software Engineer", help="Persona to adopt for the review")
+):
+    """
+    Review a specific PR using AI.
+    """
+    console = ctx.obj.console
+    console.print(f"[bold blue]Reviewing PR #{pr_number} as {persona}...[/bold blue]")
+    
+    try:
+        agent = Agent(ctx.obj.config)
+        gh_client = GitHubClient(ctx.obj.config)
+        
+        with console.status("Fetching PR details..."):
+            pr_details = gh_client.get_pr_details(pr_number)
+            diff = gh_client.get_pr_diff(pr_number)
+        
+        console.print(f"Title: [bold]{pr_details['title']}[/bold]")
+        
+        with console.status("Analyzing code changes..."):
+            review = agent.review_pr(pr_details, diff, persona)
+        
+        console.print(f"[bold green]Review Generated![/bold green]")
+        console.print(review)
+        
+        gh_client.post_comment(pr_number, f"## AI Review ({persona})\n\n{review}")
+        console.print("[green]Review posted successfully![/green]")
+
+    except Exception as e:
+        logger.exception("Error reviewing PR")
         console.print(f"[bold red]Error:[/bold red] {e}")
 
 if __name__ == "__main__":

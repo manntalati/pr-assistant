@@ -48,3 +48,40 @@ class Agent:
             return data.get("prs", [])
         except json.JSONDecodeError:
             return []
+
+    def review_pr(self, pr_details: dict, diff: str, persona: str = "Senior Software Engineer") -> str:
+        """
+        Reviews a PR based on the diff and persona.
+        """
+        if not self.rate_limiter.check_limit():
+            raise RuntimeError("Rate limit exceeded. Please try again later.")
+
+        prompt = f"""
+        You are an expert code reviewer acting as a {persona}.
+        
+        PR Title: {pr_details['title']}
+        PR Description: {pr_details['body']}
+        
+        Review the following code changes (diff) for:
+        1. Bugs and potential runtime errors.
+        2. Code style and best practices (Pythonic code, etc.).
+        3. Performance improvements.
+        4. Security vulnerabilities.
+        5. Test coverage (if applicable).
+        
+        Be constructive, professional, and strict where necessary.
+        
+        IMPORTANT: Keep your review CONCISE.
+        - Use bullet points.
+        - Avoid long explanations unless critical.
+        - Focus on high-impact issues.
+        - Do not compliment the code excessively; just state the facts.
+        
+        Provide a summary of your findings and specific actionable feedback.
+        
+        Code Changes (Diff):
+        {diff}
+        """
+        
+        response = self.model.generate_content(prompt)
+        return response.text

@@ -5,9 +5,9 @@ from pr_assistant.config import ConfigManager
 class GitHubClient:
     def __init__(self, config_manager: Optional[ConfigManager] = None):
         self.config = config_manager or ConfigManager()
-        self.token = self.config.get("github_token")
+        self.token = self.config.get("bot_github_token") or self.config.get("github_token")
         if not self.token:
-            raise ValueError("GitHub token not found in configuration. Run 'pr-assistant init' first.")
+            raise ValueError("GitHub token not found. Run 'pr-assistant init' first.")
         
         auth = Auth.Token(self.token)
         self.gh = Github(auth=auth)
@@ -48,3 +48,27 @@ class GitHubClient:
             self.repo.update_file(contents.path, message, content, contents.sha, branch=branch)
         except:
             self.repo.create_file(path, message, content, branch=branch)
+
+    def get_pr_details(self, pr_number: int) -> dict:
+        """Fetches PR title and body."""
+        pr = self.repo.get_pull(pr_number)
+        return {
+            "title": pr.title,
+            "body": pr.body,
+            "url": pr.html_url,
+            "user": pr.user.login
+        }
+
+    def get_pr_diff(self, pr_number: int) -> str:
+        """Fetches the diff of the PR."""
+        pr = self.repo.get_pull(pr_number)
+        files_data = []
+        for file in pr.get_files():
+            files_data.append(f"File: {file.filename}\nStatus: {file.status}\nChanges: +{file.additions} -{file.deletions}\n\nPatch:\n{file.patch}")
+        
+        return "\n\n---\n\n".join(files_data)
+
+    def post_comment(self, pr_number: int, body: str):
+        """Posts a comment on the PR."""
+        pr = self.repo.get_pull(pr_number)
+        pr.create_issue_comment(body)

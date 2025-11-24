@@ -32,6 +32,7 @@ Before using the tool, you need to initialize the configuration with your API ke
 
 1.  **GitHub Token**: A Personal Access Token (PAT) with `repo` scope.
 2.  **Gemini API Key**: Your Google Gemini API key.
+3.  **Bot Token (Optional)**: A separate GitHub PAT for a bot account to post reviews.
 
 Run the init command:
 
@@ -76,6 +77,16 @@ To list active PRs in your repository:
 ```bash
 pr-assistant list-prs
 ```
+
+### Review a PR
+
+To review a PR using AI:
+
+```bash
+pr-assistant review-pr <pr_number> --persona "Senior Software Engineer"
+```
+
+The AI will analyze the diff and post a comment on the PR with its findings.
 
 ## Development & Testing
 
