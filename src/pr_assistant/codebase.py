@@ -58,7 +58,8 @@ class CodebaseReader:
                 full_path = os.path.join(root, f)
                 try:
                     with open(full_path, "r", encoding="utf-8") as file_obj:
-                        files_content[os.path.relpath(full_path, self.root_dir)] = file_obj.read()
+                        relative_path = os.path.relpath(full_path, self.root_dir).replace("\\", "/")
+                        files_content[relative_path] = file_obj.read()
                 except UnicodeDecodeError:
                     pass
         return files_content
